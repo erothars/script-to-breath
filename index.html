@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>colline étoilée</title>
+    <title>Ethereal Dissolve</title>
     <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Load Lucide Icons -->
@@ -76,6 +76,7 @@
 
         .input-text { font-weight: 300; font-style: italic; }
 
+        /* ---------- LOADING SCREEN (plain CSS so it shows before Tailwind loads) ---------- */
         #loader {
             position: fixed; inset: 0; z-index: 100;
             display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
@@ -102,8 +103,8 @@
             animation: sweep 1.6s ease-in-out infinite;
         }
         @keyframes breathe {
-            0%, 100% { opacity: 0.35; filter: blur(3px); letter-spacing: 4px; }
-            50% { opacity: 1; filter: blur(0); letter-spacing: 0; }
+            0%, 100% { opacity: 0.35; filter: blur(3px); }
+            50% { opacity: 1; filter: blur(0); }
         }
         @keyframes sweep { 0% { left: -40%; } 100% { left: 100%; } }
     </style>
@@ -112,7 +113,7 @@
 
     <!-- LOADING SCREEN -->
     <div id="loader" role="status" aria-live="polite">
-        <div class="loader-title">Shantiniketan</div>
+        <div class="loader-title">Bienvenue</div>
         <div class="loader-bar"><span></span></div>
         <div class="loader-sub">Loading · Chargement</div>
     </div>
@@ -139,37 +140,28 @@
     <!-- Main Layout -->
     <div class="relative z-10 flex flex-col h-screen">
 
-        <!-- Header: language toggle, title, prompt -->
-        <header class="w-full px-6 md:px-8 pt-5">
-            <div class="flex justify-end">
-                <div class="flex border border-white/30 rounded-sm overflow-hidden text-xs font-semibold tracking-widest" role="group" aria-label="Language / Langue">
-                    <button class="lang-btn px-4 py-2.5 transition-colors hover:bg-white/10" data-lang="en">EN</button>
-                    <button class="lang-btn px-4 py-2.5 transition-colors hover:bg-white/10 border-l border-white/30" data-lang="fr">FR</button>
-                </div>
-            </div>
-            <div class="text-center mt-2">
-                <h2 data-i18n="header" class="text-xs font-medium tracking-wider opacity-70 uppercase">
-                    Inspired by Shantiniketan : The Bolpur School of Rabindranath Tagore
-                </h2>
-                <p data-i18n="prompt" class="mt-3 max-w-xl mx-auto text-sm md:text-base font-light leading-relaxed opacity-90">
-                    Choose a quote or write your own, pick a palette inspired by Megève, then press play and watch the words dissolve.
-                </p>
-            </div>
+        <!-- Header: prompt only -->
+        <header class="w-full px-6 md:px-8 pt-8 text-center">
+            <p data-i18n="prompt" class="max-w-xl mx-auto text-sm md:text-base font-light leading-relaxed opacity-90">
+                Choose a quote or write your own, pick a palette inspired by Megève, then press play and watch the words dissolve.
+            </p>
         </header>
 
         <!-- Quote Display Area -->
-        <div class="flex-1 flex flex-col items-center justify-center p-6 md:p-16 lg:px-24 text-center overflow-hidden">
+        <div class="flex-1 flex items-center justify-center p-6 md:p-16 lg:px-24 text-center overflow-hidden">
             <div
                 id="quote-display"
-                class="font-display relative transition-all duration-75 ease-out"
-                style="font-size: 3.75rem; filter: url(#organic-dissolve); opacity: 1; letter-spacing: 0px; transform: scale(1); max-width: 1000px; line-height: 1.3; font-weight: 500; color: #ffffff; text-shadow: 0 0 0px rgba(255,255,255, 0);"
+                class="font-display relative"
+                style="font-size: 3.75rem; filter: url(#organic-dissolve); opacity: 1; max-width: 1000px; line-height: 1.3; font-weight: 500; color: #ffffff; text-shadow: 0 0 0px rgba(255,255,255, 0);"
             ></div>
-            <div id="quote-source" class="mt-6 font-sans text-[11px] md:text-xs tracking-widest uppercase" style="opacity: 0.75;"></div>
         </div>
 
         <!-- Bottom Control Panel -->
         <div class="w-full theme-panel backdrop-blur-[2px]">
-            <div class="max-w-5xl mx-auto flex flex-col gap-6 px-6 md:px-8 pt-4 pb-8">
+            <div class="max-w-5xl mx-auto flex flex-col gap-5 px-6 md:px-8 pt-4 pb-8">
+
+                <!-- Attribution -->
+                <div id="quote-source" class="text-center font-sans text-[11px] md:text-xs tracking-widest uppercase opacity-70 min-h-[1rem]"></div>
 
                 <!-- Top Row: Quotes, Palettes, Input -->
                 <div class="relative flex items-end gap-3 md:gap-4">
@@ -206,7 +198,7 @@
                     </div>
                 </div>
 
-                <!-- Bottom Row: Sliders & Playback -->
+                <!-- Bottom Row: Sliders, Language & Playback -->
                 <div class="flex flex-col md:flex-row gap-8 items-end md:items-center justify-between pt-4 border-t border-white/10 font-sans">
                     <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
                         <!-- Speed Slider -->
@@ -233,8 +225,12 @@
                         </div>
                     </div>
 
-                    <!-- Action Buttons -->
+                    <!-- Language + Action Buttons -->
                     <div class="flex items-center gap-3 flex-shrink-0">
+                        <div class="flex h-12 border border-white rounded-sm overflow-hidden text-xs font-semibold tracking-widest mr-1" role="group" aria-label="Language / Langue">
+                            <button class="lang-btn w-12 h-full transition-colors hover:bg-white/10" data-lang="en">EN</button>
+                            <button class="lang-btn w-12 h-full transition-colors hover:bg-white/10 border-l border-white" data-lang="fr">FR</button>
+                        </div>
                         <button id="play-btn" data-i18n-title="playTitle" title="Play"
                             class="btn-icon w-12 h-12 border border-white flex items-center justify-center transition-all active:scale-95 rounded-sm disabled:opacity-50 disabled:cursor-not-allowed">
                             <i data-lucide="play" class="w-5 h-5 fill-current ml-0.5"></i>
@@ -245,7 +241,7 @@
                         </button>
                         <button id="reset-btn" data-i18n-title="resetTitle" title="Reset"
                             class="btn-icon w-12 h-12 border border-white flex items-center justify-center transition-all active:scale-95 rounded-sm">
-                            <i data-lucide="infinity" class="w-7 h-7 fill-current opacity-90"></i>
+                            <i data-lucide="refresh-cw" class="w-5 h-5"></i>
                         </button>
                     </div>
                 </div>
@@ -257,11 +253,10 @@
         // ================= INTERFACE TEXT (EN / FR) =================
         const UI = {
             en: {
-                header: `Inspired by Shantiniketan : The Bolpur School of Rabindranath Tagore`,
                 prompt: `Choose a quote or write your own, pick a palette inspired by Megève, then press play and watch the words dissolve.`,
                 quotes: `QUOTES`, quotesTitle: `Quotes`,
                 selectQuote: `SELECT A QUOTE`,
-                groupTagore: `Shantiniketan`,
+                groupPearson: `W. W. Pearson`,
                 groupFrench: `French writers`,
                 colors: `COLORS`, colorsTitle: `Color palettes`,
                 selectPalette: `CHOOSE A PALETTE`,
@@ -272,11 +267,10 @@
                 empty: `Enter text below...`
             },
             fr: {
-                header: `Inspiré de Shantiniketan : l’école de Bolpur de Rabindranath Tagore`,
                 prompt: `Choisissez une citation ou écrivez la vôtre, sélectionnez une palette inspirée de Megève, puis appuyez sur lecture pour voir les mots se dissoudre.`,
                 quotes: `CITATIONS`, quotesTitle: `Citations`,
                 selectQuote: `CHOISIR UNE CITATION`,
-                groupTagore: `Shantiniketan`,
+                groupPearson: `W. W. Pearson`,
                 groupFrench: `Écrivains français`,
                 colors: `COULEURS`, colorsTitle: `Palettes de couleurs`,
                 selectPalette: `CHOISIR UNE PALETTE`,
@@ -291,32 +285,32 @@
         // ================= QUOTES (each in EN and FR) =================
         const QUOTES = [
             {
-                id: 1, group: 'tagore', num: 1,
-                source: { en: `W. W. Pearson, Shantiniketan (1916)`, fr: `W. W. Pearson, Shantiniketan (1916)` },
+                id: 1, group: 'pearson', num: 1,
+                source: { en: `W. W. Pearson, 1916`, fr: `W. W. Pearson, 1916` },
                 text: {
                     en: `Does it seem as if this ashram were too remote and monastic for the training of boys who, when they leave school, have to struggle in the modern world?`,
                     fr: `Cet ashram semble-t-il trop retiré et trop monastique pour former des garçons qui, en quittant l’école, devront se battre dans le monde moderne ?`
                 }
             },
             {
-                id: 2, group: 'tagore', num: 2,
-                source: { en: `W. W. Pearson, Shantiniketan (1916)`, fr: `W. W. Pearson, Shantiniketan (1916)` },
+                id: 2, group: 'pearson', num: 2,
+                source: { en: `W. W. Pearson, 1916`, fr: `W. W. Pearson, 1916` },
                 text: {
-                    en: `Then silence descended like shadows on a starlit hill, and I realised why the name "Shantiniketan" had been given to the place. A House of Peace, it certainly was.`,
-                    fr: `Puis le silence descendit comme des ombres sur une colline étoilée, et je compris pourquoi l’on avait donné à ce lieu le nom de « Shantiniketan ». Une Demeure de Paix, c’en était bien une.`
+                    en: `Then silence descended like shadows on a starlit hill…`,
+                    fr: `Puis le silence descendit comme des ombres sur une colline étoilée…`
                 }
             },
             {
-                id: 3, group: 'tagore', num: 3,
-                source: { en: `W. W. Pearson, Shantiniketan (1916)`, fr: `W. W. Pearson, Shantiniketan (1916)` },
+                id: 3, group: 'pearson', num: 3,
+                source: { en: `W. W. Pearson, 1916`, fr: `W. W. Pearson, 1916` },
                 text: {
                     en: `"Under those trees he often walks on moonlight nights," gave me the feeling that I was a pilgrim visiting the shrine of a saint rather than a visitor to a School.`,
                     fr: `« Sous ces arbres, il se promène souvent les nuits de lune » : ces mots me donnèrent le sentiment d’être un pèlerin visitant le sanctuaire d’un saint plutôt qu’un visiteur dans une école.`
                 }
             },
             {
-                id: 4, group: 'tagore', num: 4,
-                source: { en: `W. W. Pearson, Shantiniketan (1916)`, fr: `W. W. Pearson, Shantiniketan (1916)` },
+                id: 4, group: 'pearson', num: 4,
+                source: { en: `W. W. Pearson, 1916`, fr: `W. W. Pearson, 1916` },
                 text: {
                     en: `The greatest teachers in ancient India, whose names are still remembered, were forest dwellers.`,
                     fr: `Les plus grands maîtres de l’Inde ancienne, dont on se souvient encore des noms, vivaient dans la forêt.`
@@ -446,7 +440,7 @@
         // ================= UTILITIES =================
         const t = (key) => UI[state.lang][key];
         const getQuote = (id) => QUOTES.find(q => q.id === id);
-        const quoteLabel = (q) => q.group === 'tagore' ? `SHANTINIKETAN · ${q.num}` : q.author.toUpperCase();
+        const quoteLabel = (q) => q.group === 'pearson' ? `PEARSON · ${q.num}` : q.author.toUpperCase();
 
         const getDuration = () => {
             const minDuration = 2000;
@@ -456,7 +450,7 @@
 
         // ================= RENDERING =================
         const renderQuoteList = () => {
-            const groups = [['tagore', t('groupTagore')], ['french', t('groupFrench')]];
+            const groups = [['pearson', t('groupPearson')], ['french', t('groupFrench')]];
             quoteList.innerHTML = groups.map(([group, title]) => `
                 <div class="px-4 pt-3 pb-1 text-[10px] font-bold tracking-widest uppercase opacity-50">${title}</div>
                 ${QUOTES.filter(q => q.group === group).map(q => `
@@ -504,23 +498,20 @@
         const updateDisplayStyles = () => {
             const progress = state.progress;
 
+            // Size is set only by the slider; it no longer changes during the dissolve
             quoteDisplay.style.fontSize = `${1.5 + (state.textSize / 100) * 3.5}rem`;
 
-            const currentOpacity = Math.max(0, 1 - Math.pow(progress, 2.5));
-            quoteDisplay.style.opacity = currentOpacity;
-            quoteDisplay.style.letterSpacing = `${progress * 20}px`;
-            quoteDisplay.style.transform = `scale(${1 + progress * 0.15})`;
+            // Dissolve: opacity, blur, distortion and glow only (no scaling or letter-spacing)
+            quoteDisplay.style.opacity = Math.max(0, 1 - Math.pow(progress, 2.5));
             quoteDisplay.style.textShadow = `0 0 ${progress * 40}px rgba(255,255,255, ${progress * 0.8})`;
-
             displacementMap.setAttribute('scale', progress * 120);
             gaussianBlur.setAttribute('stdDeviation', progress * 15);
 
             quoteDisplay.textContent = state.currentText || t('empty');
 
-            // Attribution line (hidden for custom text)
+            // Attribution (empty for custom text)
             const q = state.activeQuoteId ? getQuote(state.activeQuoteId) : null;
             quoteSource.textContent = q ? `— ${q.source[state.lang]}` : '';
-            quoteSource.style.opacity = q ? currentOpacity * 0.75 : 0;
         };
 
         const updateButtonStates = () => {
@@ -549,7 +540,6 @@
                 btn.setAttribute('aria-pressed', active);
             });
 
-            // Swap the active quote into the new language
             if (state.activeQuoteId) {
                 state.currentText = getQuote(state.activeQuoteId).text[lang];
             }
@@ -580,7 +570,7 @@
         // ================= MENUS =================
         const toggleQuoteMenu = (open) => {
             state.isQuoteMenuOpen = open !== undefined ? open : !state.isQuoteMenuOpen;
-            const icon = document.getElementById('quotes-icon'); // re-query: Lucide replaces the <i>
+            const icon = document.getElementById('quotes-icon');
 
             if (state.isQuoteMenuOpen) {
                 if (state.isThemeMenuOpen) toggleThemeMenu(false);
@@ -712,7 +702,7 @@
         window.onload = () => {
             lucide.createIcons();
             applyTheme(state.themeId);
-            setLanguage(state.lang); // renders lists, labels and the first quote
+            setLanguage(state.lang);
             updateButtonStates();
 
             document.querySelectorAll('.lang-btn').forEach(btn => {
@@ -727,13 +717,11 @@
             sizeSlider.addEventListener('input', handleSliderChange);
             customInput.addEventListener('input', handleInputChange);
 
-            // Close menus when tapping elsewhere
             document.addEventListener('click', (e) => {
                 if (state.isQuoteMenuOpen && !e.target.closest('#quote-menu, #quotes-toggle')) toggleQuoteMenu(false);
                 if (state.isThemeMenuOpen && !e.target.closest('#theme-menu, #theme-toggle')) toggleThemeMenu(false);
             });
 
-            // Hide loader once fonts are ready (min 1.8s so it doesn't flash; max 6s as a fallback)
             const minDelay = new Promise(r => setTimeout(r, 1800));
             const fontsReady = document.fonts ? document.fonts.ready : Promise.resolve();
             const fallback = new Promise(r => setTimeout(r, 6000));
