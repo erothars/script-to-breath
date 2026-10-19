@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>colline étoilée</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Load Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=League+Script&family=Public+Sans:ital,wght@0,300;0,400;0,600;1,400&display=swap" rel="stylesheet">
+
+    <style>
+        /* ---------- THEME VARIABLES (default: Starlit Night) ---------- */
+        :root {
+            --bg: #0033cc;
+            --g-from: #1e3a8a;
+            --g-via: #2563eb;
+            --g-to: #f9a8d4;
+            --glow-a: rgba(251, 207, 232, 0.2);
+            --glow-b: rgba(96, 165, 250, 0.2);
+            --panel: rgba(23, 37, 84, 0.8);
+            --menu: rgba(30, 58, 138, 0.92);
+            --accent: #1e3a8a;
+        }
+
+        .font-display { font-family: 'League Script', cursive; }
+        .font-sans { font-family: 'Public Sans', sans-serif; }
+
+        body {
+            overflow: hidden;
+            background-color: var(--bg);
+            transition: background-color 1s ease;
+        }
+
+        /* Themed surfaces */
+        .theme-bg { background-color: var(--bg); transition: background-color 1s ease; }
+        .theme-gradient { background-image: linear-gradient(to top right, var(--g-from), var(--g-via), var(--g-to)); }
+        .theme-glow-a { background-color: var(--glow-a); transition: background-color 1s ease; }
+        .theme-glow-b { background-color: var(--glow-b); transition: background-color 1s ease; }
+        .theme-panel { background-image: linear-gradient(to top, var(--panel), transparent); }
+        .theme-menu { background-color: var(--menu); }
+        .btn-icon:hover:not(:disabled) { background-color: #ffffff; color: var(--accent); }
+
+        /* Input Range Styling */
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; height: 24px; width: 12px; background: #ffffff;
+            cursor: pointer; margin-top: -11px; box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%; height: 2px; cursor: pointer; background: rgba(255, 255, 255, 0.5);
+        }
+        input[type=range]:focus { outline: none; }
+
+        /* Smooth gradient animation */
+        @keyframes gradient-move {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .animate-gradient-slow { background-size: 200% 200%; animation: gradient-move 15s ease infinite; }
+
+        /* Noise grain texture */
+        .bg-noise {
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.07'/%3E%3C/svg%3E");
+        }
+
+        /* Menu animation */
+        .menu-slide-up { animation: slideUp 0.3s ease-out forwards; }
+        @keyframes slideUp {
+            from { transform: translateY(10px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .input-text { font-weight: 300; font-style: italic; }
+
+        #loader {
+            position: fixed; inset: 0; z-index: 100;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+            background:
+                radial-gradient(circle at 75% 20%, rgba(249, 168, 212, 0.35), transparent 50%),
+                radial-gradient(circle at 20% 85%, rgba(96, 165, 250, 0.3), transparent 55%),
+                #0033cc;
+            color: #ffffff;
+            transition: opacity 0.9s ease, visibility 0.9s ease;
+        }
+        #loader.loader-hidden { opacity: 0; visibility: hidden; }
+        .loader-title {
+            font-family: 'League Script', cursive;
+            font-size: clamp(2.5rem, 10vw, 4.5rem);
+            animation: breathe 2.4s ease-in-out infinite;
+        }
+        .loader-sub {
+            font-family: 'Public Sans', sans-serif;
+            font-size: 11px; letter-spacing: 0.3em; text-transform: uppercase; opacity: 0.75;
+        }
+        .loader-bar { width: 140px; height: 1px; background: rgba(255,255,255,0.25); overflow: hidden; position: relative; }
+        .loader-bar span {
+            position: absolute; top: 0; left: -40%; width: 40%; height: 100%; background: #ffffff;
+            animation: sweep 1.6s ease-in-out infinite;
+        }
+        @keyframes breathe {
+            0%, 100% { opacity: 0.35; filter: blur(3px); letter-spacing: 4px; }
+            50% { opacity: 1; filter: blur(0); letter-spacing: 0; }
+        }
+        @keyframes sweep { 0% { left: -40%; } 100% { left: 100%; } }
+    </style>
+</head>
+<body class="min-h-screen w-full font-sans text-white selection:bg-pink-500 selection:text-white">
+
+    <!-- LOADING SCREEN -->
+    <div id="loader" role="status" aria-live="polite">
+        <div class="loader-title">Shantiniketan</div>
+        <div class="loader-bar"><span></span></div>
+        <div class="loader-sub">Loading · Chargement</div>
+    </div>
+
+    <!-- SVG FILTER DEFINITION -->
+    <svg width="0" height="0" class="absolute">
+        <defs>
+            <filter id="organic-dissolve" x="-50%" y="-50%" width="200%" height="200%">
+                <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="3" result="noise" />
+                <feDisplacementMap in="SourceGraphic" in2="noise" scale="0" xChannelSelector="R" yChannelSelector="G" result="displaced" id="displacement-map" />
+                <feGaussianBlur in="displaced" stdDeviation="0" result="blurred" id="gaussian-blur" />
+            </filter>
+        </defs>
+    </svg>
+
+    <!-- Themed Ethereal Background -->
+    <div class="absolute inset-0 z-0 theme-bg">
+        <div class="absolute inset-0 theme-gradient opacity-80 animate-gradient-slow mix-blend-overlay"></div>
+        <div class="absolute inset-0 bg-noise opacity-40 mix-blend-soft-light pointer-events-none"></div>
+        <div class="absolute top-[-20%] right-[-10%] w-[80vw] h-[80vw] theme-glow-a rounded-full blur-[100px] pointer-events-none"></div>
+        <div class="absolute bottom-[-20%] left-[-10%] w-[60vw] h-[60vw] theme-glow-b rounded-full blur-[80px] pointer-events-none"></div>
+    </div>
+
+    <!-- Main Layout -->
+    <div class="relative z-10 flex flex-col h-screen">
+
+        <!-- Header: language toggle, title, prompt -->
+        <header class="w-full px-6 md:px-8 pt-5">
+            <div class="flex justify-end">
+                <div class="flex border border-white/30 rounded-sm overflow-hidden text-xs font-semibold tracking-widest" role="group" aria-label="Language / Langue">
+                    <button class="lang-btn px-4 py-2.5 transition-colors hover:bg-white/10" data-lang="en">EN</button>
+                    <button class="lang-btn px-4 py-2.5 transition-colors hover:bg-white/10 border-l border-white/30" data-lang="fr">FR</button>
+                </div>
+            </div>
+            <div class="text-center mt-2">
+                <h2 data-i18n="header" class="text-xs font-medium tracking-wider opacity-70 uppercase">
+                    Inspired by Shantiniketan : The Bolpur School of Rabindranath Tagore
+                </h2>
+                <p data-i18n="prompt" class="mt-3 max-w-xl mx-auto text-sm md:text-base font-light leading-relaxed opacity-90">
+                    Choose a quote or write your own, pick a palette inspired by Megève, then press play and watch the words dissolve.
+                </p>
+            </div>
+        </header>
+
+        <!-- Quote Display Area -->
+        <div class="flex-1 flex flex-col items-center justify-center p-6 md:p-16 lg:px-24 text-center overflow-hidden">
+            <div
+                id="quote-display"
+                class="font-display relative transition-all duration-75 ease-out"
+                style="font-size: 3.75rem; filter: url(#organic-dissolve); opacity: 1; letter-spacing: 0px; transform: scale(1); max-width: 1000px; line-height: 1.3; font-weight: 500; color: #ffffff; text-shadow: 0 0 0px rgba(255,255,255, 0);"
+            ></div>
+            <div id="quote-source" class="mt-6 font-sans text-[11px] md:text-xs tracking-widest uppercase" style="opacity: 0.75;"></div>
+        </div>
+
+        <!-- Bottom Control Panel -->
+        <div class="w-full theme-panel backdrop-blur-[2px]">
+            <div class="max-w-5xl mx-auto flex flex-col gap-6 px-6 md:px-8 pt-4 pb-8">
+
+                <!-- Top Row: Quotes, Palettes, Input -->
+                <div class="relative flex items-end gap-3 md:gap-4">
+
+                    <!-- Quote Menu -->
+                    <div id="quote-menu" class="absolute bottom-full mb-2 left-0 w-80 max-w-full theme-menu backdrop-blur-xl border border-white/20 rounded-lg shadow-2xl overflow-hidden z-20 flex flex-col hidden text-white font-sans">
+                        <div data-i18n="selectQuote" class="p-3 border-b border-white/10 text-xs font-bold tracking-widest opacity-60 bg-black/20">SELECT A QUOTE</div>
+                        <div id="quote-list" class="max-h-72 overflow-y-auto py-1"></div>
+                    </div>
+
+                    <!-- Palette Menu -->
+                    <div id="theme-menu" class="absolute bottom-full mb-2 left-0 w-80 max-w-full theme-menu backdrop-blur-xl border border-white/20 rounded-lg shadow-2xl overflow-hidden z-20 flex flex-col hidden text-white font-sans">
+                        <div data-i18n="selectPalette" class="p-3 border-b border-white/10 text-xs font-bold tracking-widest opacity-60 bg-black/20">CHOOSE A PALETTE</div>
+                        <div id="theme-list" class="max-h-72 overflow-y-auto py-1"></div>
+                    </div>
+
+                    <button id="quotes-toggle" data-i18n-title="quotesTitle" title="Quotes"
+                        class="h-[52px] px-4 border border-white/30 flex items-center gap-2 rounded-sm hover:bg-white/10 transition-all flex-shrink-0">
+                        <i data-lucide="quote" class="w-4 h-4"></i>
+                        <span data-i18n="quotes" class="hidden md:inline font-medium text-sm tracking-wide font-sans">QUOTES</span>
+                        <i data-lucide="chevron-up" id="quotes-icon" class="w-4 h-4 transition-transform duration-300"></i>
+                    </button>
+
+                    <button id="theme-toggle" data-i18n-title="colorsTitle" title="Colors"
+                        class="h-[52px] px-4 border border-white/30 flex items-center gap-2 rounded-sm hover:bg-white/10 transition-all flex-shrink-0">
+                        <i data-lucide="palette" class="w-4 h-4"></i>
+                        <span data-i18n="colors" class="hidden md:inline font-medium text-sm tracking-wide font-sans">COLORS</span>
+                    </button>
+
+                    <!-- Text Input -->
+                    <div class="relative group flex-1 min-w-0">
+                        <input type="text" id="custom-input" placeholder="Type your own ethereal thought here..."
+                            class="w-full bg-transparent border border-white/30 text-base md:text-lg px-4 py-3 h-[52px] text-white placeholder-white/50 focus:outline-none focus:border-white focus:bg-white/5 transition-all rounded-sm font-sans input-text" />
+                    </div>
+                </div>
+
+                <!-- Bottom Row: Sliders & Playback -->
+                <div class="flex flex-col md:flex-row gap-8 items-end md:items-center justify-between pt-4 border-t border-white/10 font-sans">
+                    <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
+                        <!-- Speed Slider -->
+                        <div class="flex flex-col gap-2">
+                            <div class="flex justify-between text-xs font-medium tracking-wider opacity-70 uppercase">
+                                <span data-i18n="slow">Slow Dissolve</span>
+                                <span data-i18n="fast">Fast Dissolve</span>
+                            </div>
+                            <div class="relative h-6 flex items-center group">
+                                <input type="range" min="0" max="100" value="50" id="speed-slider" class="z-10 relative" />
+                                <div class="absolute top-1/2 left-0 w-full h-0.5 bg-white/30 group-hover:bg-white/50 transition-colors -translate-y-1/2 pointer-events-none"></div>
+                            </div>
+                        </div>
+                        <!-- Size Slider -->
+                        <div class="flex flex-col gap-2">
+                            <div class="flex justify-between text-xs font-medium tracking-wider opacity-70 uppercase">
+                                <span data-i18n="small">Small Text</span>
+                                <span data-i18n="large">Large Text</span>
+                            </div>
+                            <div class="relative h-6 flex items-center group">
+                                <input type="range" min="0" max="100" value="50" id="size-slider" class="z-10 relative" />
+                                <div class="absolute top-1/2 left-0 w-full h-0.5 bg-white/30 group-hover:bg-white/50 transition-colors -translate-y-1/2 pointer-events-none"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex items-center gap-3 flex-shrink-0">
+                        <button id="play-btn" data-i18n-title="playTitle" title="Play"
+                            class="btn-icon w-12 h-12 border border-white flex items-center justify-center transition-all active:scale-95 rounded-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                            <i data-lucide="play" class="w-5 h-5 fill-current ml-0.5"></i>
+                        </button>
+                        <button id="pause-btn" data-i18n-title="pauseTitle" title="Pause"
+                            class="btn-icon w-12 h-12 border border-white flex items-center justify-center transition-all active:scale-95 rounded-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                            <i data-lucide="square" class="w-5 h-5 fill-current"></i>
+                        </button>
+                        <button id="reset-btn" data-i18n-title="resetTitle" title="Reset"
+                            class="btn-icon w-12 h-12 border border-white flex items-center justify-center transition-all active:scale-95 rounded-sm">
+                            <i data-lucide="infinity" class="w-7 h-7 fill-current opacity-90"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ================= INTERFACE TEXT (EN / FR) =================
+        const UI = {
+            en: {
+                header: `Inspired by Shantiniketan : The Bolpur School of Rabindranath Tagore`,
+                prompt: `Choose a quote or write your own, pick a palette inspired by Megève, then press play and watch the words dissolve.`,
+                quotes: `QUOTES`, quotesTitle: `Quotes`,
+                selectQuote: `SELECT A QUOTE`,
+                groupTagore: `Shantiniketan`,
+                groupFrench: `French writers`,
+                colors: `COLORS`, colorsTitle: `Color palettes`,
+                selectPalette: `CHOOSE A PALETTE`,
+                placeholder: `Type your own ethereal thought here...`,
+                slow: `Slow Dissolve`, fast: `Fast Dissolve`,
+                small: `Small Text`, large: `Large Text`,
+                playTitle: `Play`, pauseTitle: `Pause`, resetTitle: `Reset`,
+                empty: `Enter text below...`
+            },
+            fr: {
+                header: `Inspiré de Shantiniketan : l’école de Bolpur de Rabindranath Tagore`,
+                prompt: `Choisissez une citation ou écrivez la vôtre, sélectionnez une palette inspirée de Megève, puis appuyez sur lecture pour voir les mots se dissoudre.`,
+                quotes: `CITATIONS`, quotesTitle: `Citations`,
+                selectQuote: `CHOISIR UNE CITATION`,
+                groupTagore: `Shantiniketan`,
+                groupFrench: `Écrivains français`,
+                colors: `COULEURS`, colorsTitle: `Palettes de couleurs`,
+                selectPalette: `CHOISIR UNE PALETTE`,
+                placeholder: `Écrivez ici votre propre pensée éthérée…`,
+                slow: `Dissolution lente`, fast: `Dissolution rapide`,
+                small: `Petit texte`, large: `Grand texte`,
+                playTitle: `Lecture`, pauseTitle: `Pause`, resetTitle: `Réinitialiser`,
+                empty: `Écrivez ci-dessous…`
+            }
+        };
+
+        // ================= QUOTES (each in EN and FR) =================
+        const QUOTES = [
+            {
+                id: 1, group: 'tagore', num: 1,
+                source: { en: `W. W. Pearson, Shantiniketan (1916)`, fr: `W. W. Pearson, Shantiniketan (1916)` },
+                text: {
+                    en: `Does it seem as if this ashram were too remote and monastic for the training of boys who, when they leave school, have to struggle in the modern world?`,
+                    fr: `Cet ashram semble-t-il trop retiré et trop monastique pour former des garçons qui, en quittant l’école, devront se battre dans le monde moderne ?`
+                }
+            },
+            {
+                id: 2, group: 'tagore', num: 2,
+                source: { en: `W. W. Pearson, Shantiniketan (1916)`, fr: `W. W. Pearson, Shantiniketan (1916)` },
+                text: {
+                    en: `Then silence descended like shadows on a starlit hill, and I realised why the name "Shantiniketan" had been given to the place. A House of Peace, it certainly was.`,
+                    fr: `Puis le silence descendit comme des ombres sur une colline étoilée, et je compris pourquoi l’on avait donné à ce lieu le nom de « Shantiniketan ». Une Demeure de Paix, c’en était bien une.`
+                }
+            },
+            {
+                id: 3, group: 'tagore', num: 3,
+                source: { en: `W. W. Pearson, Shantiniketan (1916)`, fr: `W. W. Pearson, Shantiniketan (1916)` },
+                text: {
+                    en: `"Under those trees he often walks on moonlight nights," gave me the feeling that I was a pilgrim visiting the shrine of a saint rather than a visitor to a School.`,
+                    fr: `« Sous ces arbres, il se promène souvent les nuits de lune » : ces mots me donnèrent le sentiment d’être un pèlerin visitant le sanctuaire d’un saint plutôt qu’un visiteur dans une école.`
+                }
+            },
+            {
+                id: 4, group: 'tagore', num: 4,
+                source: { en: `W. W. Pearson, Shantiniketan (1916)`, fr: `W. W. Pearson, Shantiniketan (1916)` },
+                text: {
+                    en: `The greatest teachers in ancient India, whose names are still remembered, were forest dwellers.`,
+                    fr: `Les plus grands maîtres de l’Inde ancienne, dont on se souvient encore des noms, vivaient dans la forêt.`
+                }
+            },
+            {
+                id: 5, group: 'french', author: 'Rousseau',
+                source: { en: `Jean-Jacques Rousseau, Confessions`, fr: `Jean-Jacques Rousseau, Les Confessions` },
+                text: {
+                    fr: `Jamais pays de plaine, quelque beau qu’il fût, ne parut tel à mes yeux. Il me faut des torrents, des rochers, des sapins, des bois noirs, des montagnes, des chemins raboteux à monter et à descendre, des précipices à mes côtés qui me fassent bien peur.`,
+                    en: `No flat country, however beautiful, has ever seemed so to my eyes. I need torrents, rocks, fir trees, dark woods, mountains, rugged paths to climb and descend, and precipices beside me to frighten me.`
+                }
+            },
+            {
+                id: 6, group: 'french', author: 'Rousseau',
+                source: { en: `Jean-Jacques Rousseau, Emile, or On Education`, fr: `Jean-Jacques Rousseau, Émile ou De l’éducation` },
+                text: {
+                    fr: `La nature veut que les enfants soient enfants avant que d’être hommes.`,
+                    en: `Nature wants children to be children before they are men.`
+                }
+            },
+            {
+                id: 7, group: 'french', author: 'Montaigne',
+                source: { en: `Michel de Montaigne, Essays, "On the Education of Children"`, fr: `Michel de Montaigne, Essais, « De l’institution des enfants »` },
+                text: {
+                    fr: `…plutôt la tête bien faite que bien pleine.`,
+                    en: `…a head well made rather than well filled.`
+                }
+            },
+            {
+                id: 8, group: 'french', author: 'Pascal',
+                source: { en: `Blaise Pascal, Pensées`, fr: `Blaise Pascal, Pensées` },
+                text: {
+                    fr: `Le silence éternel de ces espaces infinis m’effraie.`,
+                    en: `The eternal silence of these infinite spaces frightens me.`
+                }
+            },
+            {
+                id: 9, group: 'french', author: 'Voltaire',
+                source: { en: `Voltaire, Candide`, fr: `Voltaire, Candide` },
+                text: {
+                    fr: `Il faut cultiver notre jardin.`,
+                    en: `We must cultivate our garden.`
+                }
+            }
+        ];
+
+        // ================= COLOR PALETTES (Megève landscape) =================
+        const THEMES = [
+            {
+                id: 'nuit',
+                name: { en: `Starlit Night`, fr: `Nuit étoilée` },
+                desc: { en: `The original royal blue`, fr: `Le bleu roi d’origine` },
+                colors: { bg: '#0033cc', from: '#1e3a8a', via: '#2563eb', to: '#f9a8d4', glowA: 'rgba(251,207,232,0.2)', glowB: 'rgba(96,165,250,0.2)', panel: 'rgba(23,37,84,0.8)', menu: 'rgba(30,58,138,0.92)', accent: '#1e3a8a' }
+            },
+            {
+                id: 'alpenglow',
+                name: { en: `Alpenglow`, fr: `Sommets embrasés` },
+                desc: { en: `Pink light on Mont Blanc at dusk`, fr: `Lumière rose sur le Mont-Blanc au crépuscule` },
+                colors: { bg: '#4a1d4f', from: '#2d1b4e', via: '#b8487a', to: '#f7a978', glowA: 'rgba(253,186,116,0.25)', glowB: 'rgba(244,114,182,0.2)', panel: 'rgba(45,20,60,0.82)', menu: 'rgba(74,29,79,0.94)', accent: '#4a1d4f' }
+            },
+            {
+                id: 'sapins',
+                name: { en: `Fir Forest`, fr: `Forêt de sapins` },
+                desc: { en: `Dark woods on the mountainside`, fr: `Les bois sombres à flanc de montagne` },
+                colors: { bg: '#0f3b2e', from: '#0a2a20', via: '#2f6b4f', to: '#a7c4a0', glowA: 'rgba(209,250,229,0.15)', glowB: 'rgba(52,211,153,0.15)', panel: 'rgba(6,30,22,0.82)', menu: 'rgba(15,59,46,0.94)', accent: '#0f3b2e' }
+            },
+            {
+                id: 'neige',
+                name: { en: `Snow at Dusk`, fr: `Neige au crépuscule` },
+                desc: { en: `Blue shadows on fresh snow`, fr: `Ombres bleues sur la neige fraîche` },
+                colors: { bg: '#34496a', from: '#2a3a55', via: '#7d95b5', to: '#c3d3e6', glowA: 'rgba(255,255,255,0.22)', glowB: 'rgba(186,214,245,0.2)', panel: 'rgba(30,42,62,0.84)', menu: 'rgba(42,58,85,0.95)', accent: '#2a3a55' }
+            },
+            {
+                id: 'chalet',
+                name: { en: `Chalet Fire`, fr: `Feu de chalet` },
+                desc: { en: `Old timber and candlelight`, fr: `Vieux bois et lueur de bougie` },
+                colors: { bg: '#4a2a17', from: '#2b170c', via: '#8b5a2b', to: '#e8b46a', glowA: 'rgba(251,191,36,0.2)', glowB: 'rgba(234,88,12,0.15)', panel: 'rgba(35,18,8,0.84)', menu: 'rgba(74,42,23,0.95)', accent: '#4a2a17' }
+            },
+            {
+                id: 'glacier',
+                name: { en: `Glacier`, fr: `Glacier` },
+                desc: { en: `Ice blue from the high peaks`, fr: `Le bleu glacé des hauts sommets` },
+                colors: { bg: '#0b4a5e', from: '#06303d', via: '#1f8a9e', to: '#bfe9ef', glowA: 'rgba(207,250,254,0.22)', glowB: 'rgba(34,211,238,0.15)', panel: 'rgba(4,32,42,0.84)', menu: 'rgba(11,74,94,0.95)', accent: '#0b4a5e' }
+            }
+        ];
+
+        // ================= DOM REFERENCES =================
+        const $ = (id) => document.getElementById(id);
+        const quoteDisplay = $('quote-display');
+        const quoteSource = $('quote-source');
+        const customInput = $('custom-input');
+        const quoteMenu = $('quote-menu');
+        const quoteList = $('quote-list');
+        const quotesToggle = $('quotes-toggle');
+        const themeMenu = $('theme-menu');
+        const themeList = $('theme-list');
+        const themeToggle = $('theme-toggle');
+        const speedSlider = $('speed-slider');
+        const sizeSlider = $('size-slider');
+        const playBtn = $('play-btn');
+        const pauseBtn = $('pause-btn');
+        const resetBtn = $('reset-btn');
+        const displacementMap = $('displacement-map');
+        const gaussianBlur = $('gaussian-blur');
+        const loader = $('loader');
+
+        // ================= STATE =================
+        const browserLang = (navigator.language || 'en').toLowerCase().startsWith('fr') ? 'fr' : 'en';
+
+        let state = {
+            lang: browserLang,
+            currentText: QUOTES[0].text[browserLang],
+            activeQuoteId: QUOTES[0].id,
+            themeId: 'nuit',
+            isPlaying: false,
+            progress: 0,
+            speed: 50,
+            textSize: 50,
+            isQuoteMenuOpen: false,
+            isThemeMenuOpen: false,
+            animationFrame: null,
+            startTime: null,
+            pausedProgress: 0,
+        };
+
+        // ================= UTILITIES =================
+        const t = (key) => UI[state.lang][key];
+        const getQuote = (id) => QUOTES.find(q => q.id === id);
+        const quoteLabel = (q) => q.group === 'tagore' ? `SHANTINIKETAN · ${q.num}` : q.author.toUpperCase();
+
+        const getDuration = () => {
+            const minDuration = 2000;
+            const maxDuration = 15000;
+            return maxDuration - ((state.speed / 100) * (maxDuration - minDuration));
+        };
+
+        // ================= RENDERING =================
+        const renderQuoteList = () => {
+            const groups = [['tagore', t('groupTagore')], ['french', t('groupFrench')]];
+            quoteList.innerHTML = groups.map(([group, title]) => `
+                <div class="px-4 pt-3 pb-1 text-[10px] font-bold tracking-widest uppercase opacity-50">${title}</div>
+                ${QUOTES.filter(q => q.group === group).map(q => `
+                    <button data-id="${q.id}"
+                        class="quote-item w-full text-left px-4 py-3 text-sm hover:bg-white/10 transition-colors border-l-2 ${
+                            state.activeQuoteId === q.id ? 'border-white bg-white/5' : 'border-transparent opacity-70 hover:opacity-100'
+                        }">
+                        <span class="font-semibold block mb-1">${quoteLabel(q)}</span>
+                        <span class="line-clamp-2 text-xs font-light italic leading-relaxed opacity-80">${q.text[state.lang]}</span>
+                    </button>
+                `).join('')}
+            `).join('');
+
+            quoteList.querySelectorAll('.quote-item').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const quote = getQuote(Number(e.currentTarget.getAttribute('data-id')));
+                    if (quote) handleQuoteClick(quote);
+                });
+            });
+        };
+
+        const renderThemeList = () => {
+            themeList.innerHTML = THEMES.map(th => `
+                <button data-theme="${th.id}"
+                    class="theme-item w-full flex items-center gap-3 text-left px-4 py-3 hover:bg-white/10 transition-colors border-l-2 ${
+                        state.themeId === th.id ? 'border-white bg-white/5' : 'border-transparent opacity-80 hover:opacity-100'
+                    }">
+                    <span class="w-9 h-9 rounded-full flex-shrink-0 border border-white/40 shadow-inner"
+                        style="background: linear-gradient(135deg, ${th.colors.from}, ${th.colors.via}, ${th.colors.to});"></span>
+                    <span>
+                        <span class="block text-sm font-semibold">${th.name[state.lang]}</span>
+                        <span class="block text-xs font-light italic opacity-70">${th.desc[state.lang]}</span>
+                    </span>
+                </button>
+            `).join('');
+
+            themeList.querySelectorAll('.theme-item').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    applyTheme(e.currentTarget.getAttribute('data-theme'));
+                    toggleThemeMenu(false);
+                });
+            });
+        };
+
+        const updateDisplayStyles = () => {
+            const progress = state.progress;
+
+            quoteDisplay.style.fontSize = `${1.5 + (state.textSize / 100) * 3.5}rem`;
+
+            const currentOpacity = Math.max(0, 1 - Math.pow(progress, 2.5));
+            quoteDisplay.style.opacity = currentOpacity;
+            quoteDisplay.style.letterSpacing = `${progress * 20}px`;
+            quoteDisplay.style.transform = `scale(${1 + progress * 0.15})`;
+            quoteDisplay.style.textShadow = `0 0 ${progress * 40}px rgba(255,255,255, ${progress * 0.8})`;
+
+            displacementMap.setAttribute('scale', progress * 120);
+            gaussianBlur.setAttribute('stdDeviation', progress * 15);
+
+            quoteDisplay.textContent = state.currentText || t('empty');
+
+            // Attribution line (hidden for custom text)
+            const q = state.activeQuoteId ? getQuote(state.activeQuoteId) : null;
+            quoteSource.textContent = q ? `— ${q.source[state.lang]}` : '';
+            quoteSource.style.opacity = q ? currentOpacity * 0.75 : 0;
+        };
+
+        const updateButtonStates = () => {
+            playBtn.disabled = state.isPlaying || state.progress >= 1;
+            pauseBtn.disabled = !state.isPlaying || state.progress === 0;
+        };
+
+        // ================= LANGUAGE =================
+        const setLanguage = (lang) => {
+            state.lang = lang;
+            document.documentElement.lang = lang;
+
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                el.textContent = t(el.dataset.i18n);
+            });
+            document.querySelectorAll('[data-i18n-title]').forEach(el => {
+                el.title = t(el.dataset.i18nTitle);
+                el.setAttribute('aria-label', t(el.dataset.i18nTitle));
+            });
+            customInput.placeholder = t('placeholder');
+
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                const active = btn.dataset.lang === lang;
+                btn.classList.toggle('bg-white/20', active);
+                btn.classList.toggle('opacity-60', !active);
+                btn.setAttribute('aria-pressed', active);
+            });
+
+            // Swap the active quote into the new language
+            if (state.activeQuoteId) {
+                state.currentText = getQuote(state.activeQuoteId).text[lang];
+            }
+
+            renderQuoteList();
+            renderThemeList();
+            updateDisplayStyles();
+        };
+
+        // ================= THEMES =================
+        const applyTheme = (id) => {
+            const theme = THEMES.find(th => th.id === id) || THEMES[0];
+            state.themeId = theme.id;
+            const c = theme.colors;
+            const root = document.documentElement.style;
+            root.setProperty('--bg', c.bg);
+            root.setProperty('--g-from', c.from);
+            root.setProperty('--g-via', c.via);
+            root.setProperty('--g-to', c.to);
+            root.setProperty('--glow-a', c.glowA);
+            root.setProperty('--glow-b', c.glowB);
+            root.setProperty('--panel', c.panel);
+            root.setProperty('--menu', c.menu);
+            root.setProperty('--accent', c.accent);
+            renderThemeList();
+        };
+
+        // ================= MENUS =================
+        const toggleQuoteMenu = (open) => {
+            state.isQuoteMenuOpen = open !== undefined ? open : !state.isQuoteMenuOpen;
+            const icon = document.getElementById('quotes-icon'); // re-query: Lucide replaces the <i>
+
+            if (state.isQuoteMenuOpen) {
+                if (state.isThemeMenuOpen) toggleThemeMenu(false);
+                quoteMenu.classList.remove('hidden');
+                quoteMenu.classList.add('menu-slide-up');
+                quotesToggle.classList.add('bg-white/10', 'border-white');
+                if (icon) icon.classList.add('rotate-180');
+            } else {
+                quoteMenu.classList.remove('menu-slide-up');
+                quoteMenu.classList.add('hidden');
+                quotesToggle.classList.remove('bg-white/10', 'border-white');
+                if (icon) icon.classList.remove('rotate-180');
+            }
+        };
+
+        const toggleThemeMenu = (open) => {
+            state.isThemeMenuOpen = open !== undefined ? open : !state.isThemeMenuOpen;
+
+            if (state.isThemeMenuOpen) {
+                if (state.isQuoteMenuOpen) toggleQuoteMenu(false);
+                themeMenu.classList.remove('hidden');
+                themeMenu.classList.add('menu-slide-up');
+                themeToggle.classList.add('bg-white/10', 'border-white');
+            } else {
+                themeMenu.classList.remove('menu-slide-up');
+                themeMenu.classList.add('hidden');
+                themeToggle.classList.remove('bg-white/10', 'border-white');
+            }
+        };
+
+        // ================= ANIMATION LOOP =================
+        const animate = (time) => {
+            if (!state.startTime) state.startTime = time;
+
+            const relativeProgress = (time - state.startTime) / getDuration();
+            state.progress = Math.min(state.pausedProgress + relativeProgress, 1);
+
+            updateDisplayStyles();
+            updateButtonStates();
+
+            if (state.progress < 1) {
+                state.animationFrame = requestAnimationFrame(animate);
+            } else {
+                state.isPlaying = false;
+                state.pausedProgress = 1;
+                updateButtonStates();
+            }
+        };
+
+        // ================= EVENT HANDLERS =================
+        const handlePlay = () => {
+            if (state.progress >= 1) {
+                handleReset();
+                setTimeout(() => {
+                    state.isPlaying = true;
+                    state.startTime = null;
+                    state.animationFrame = requestAnimationFrame(animate);
+                    updateButtonStates();
+                }, 50);
+            } else if (!state.isPlaying) {
+                state.isPlaying = true;
+                state.startTime = null;
+                state.animationFrame = requestAnimationFrame(animate);
+                updateButtonStates();
+            }
+        };
+
+        const handlePause = () => {
+            if (state.isPlaying) {
+                state.isPlaying = false;
+                cancelAnimationFrame(state.animationFrame);
+                state.pausedProgress = state.progress;
+                state.startTime = null;
+                updateButtonStates();
+            }
+        };
+
+        const handleReset = () => {
+            state.isPlaying = false;
+            cancelAnimationFrame(state.animationFrame);
+            state.progress = 0;
+            state.pausedProgress = 0;
+            state.startTime = null;
+            updateButtonStates();
+            updateDisplayStyles();
+        };
+
+        const handleQuoteClick = (quote) => {
+            if (state.progress >= 1) handleReset();
+            state.activeQuoteId = quote.id;
+            state.currentText = quote.text[state.lang];
+            customInput.value = "";
+            toggleQuoteMenu(false);
+            updateDisplayStyles();
+            renderQuoteList();
+        };
+
+        const handleInputChange = (e) => {
+            if (state.progress >= 1) handleReset();
+            state.currentText = e.target.value;
+            state.activeQuoteId = null;
+            updateDisplayStyles();
+            renderQuoteList();
+        };
+
+        const handleSliderChange = (e) => {
+            const value = Number(e.target.value);
+            if (e.target.id === 'speed-slider') {
+                state.speed = value;
+                if (state.isPlaying) {
+                    cancelAnimationFrame(state.animationFrame);
+                    state.startTime = null;
+                    state.pausedProgress = state.progress;
+                    state.animationFrame = requestAnimationFrame(animate);
+                }
+            } else if (e.target.id === 'size-slider') {
+                state.textSize = value;
+            }
+            updateDisplayStyles();
+        };
+
+        // ================= LOADING SCREEN =================
+        const hideLoader = () => {
+            loader.classList.add('loader-hidden');
+            setTimeout(() => loader.remove(), 1000);
+        };
+
+        // ================= INITIALIZATION =================
+        window.onload = () => {
+            lucide.createIcons();
+            applyTheme(state.themeId);
+            setLanguage(state.lang); // renders lists, labels and the first quote
+            updateButtonStates();
+
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.addEventListener('click', () => setLanguage(btn.dataset.lang));
+            });
+            quotesToggle.addEventListener('click', () => toggleQuoteMenu());
+            themeToggle.addEventListener('click', () => toggleThemeMenu());
+            playBtn.addEventListener('click', handlePlay);
+            pauseBtn.addEventListener('click', handlePause);
+            resetBtn.addEventListener('click', handleReset);
+            speedSlider.addEventListener('input', handleSliderChange);
+            sizeSlider.addEventListener('input', handleSliderChange);
+            customInput.addEventListener('input', handleInputChange);
+
+            // Close menus when tapping elsewhere
+            document.addEventListener('click', (e) => {
+                if (state.isQuoteMenuOpen && !e.target.closest('#quote-menu, #quotes-toggle')) toggleQuoteMenu(false);
+                if (state.isThemeMenuOpen && !e.target.closest('#theme-menu, #theme-toggle')) toggleThemeMenu(false);
+            });
+
+            // Hide loader once fonts are ready (min 1.8s so it doesn't flash; max 6s as a fallback)
+            const minDelay = new Promise(r => setTimeout(r, 1800));
+            const fontsReady = document.fonts ? document.fonts.ready : Promise.resolve();
+            const fallback = new Promise(r => setTimeout(r, 6000));
+            Promise.race([Promise.all([minDelay, fontsReady]), fallback]).then(hideLoader);
+        };
+    </script>
+</body>
+</html>
