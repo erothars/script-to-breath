@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ethereal Dissolve</title>
+    <title>Script to Breath · Du script au souffle</title>
     <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Load Lucide Icons -->
@@ -80,6 +80,7 @@
         #loader {
             position: fixed; inset: 0; z-index: 100;
             display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+            padding: 0 24px; text-align: center;
             background:
                 radial-gradient(circle at 75% 20%, rgba(249, 168, 212, 0.35), transparent 50%),
                 radial-gradient(circle at 20% 85%, rgba(96, 165, 250, 0.3), transparent 55%),
@@ -91,7 +92,14 @@
         .loader-title {
             font-family: 'League Script', cursive;
             font-size: clamp(2.5rem, 10vw, 4.5rem);
+            line-height: 1.2;
             animation: breathe 2.4s ease-in-out infinite;
+        }
+        .loader-subtitle {
+            font-family: 'Public Sans', sans-serif;
+            font-size: 13px; font-style: italic; font-weight: 300;
+            letter-spacing: 0.15em; opacity: 0.85;
+            margin-top: -6px;
         }
         .loader-sub {
             font-family: 'Public Sans', sans-serif;
@@ -113,7 +121,8 @@
 
     <!-- LOADING SCREEN -->
     <div id="loader" role="status" aria-live="polite">
-        <div class="loader-title">Bienvenue</div>
+        <div class="loader-title">Script to Breath</div>
+        <div class="loader-subtitle">Du script au souffle</div>
         <div class="loader-bar"><span></span></div>
         <div class="loader-sub">Loading · Chargement</div>
     </div>
@@ -142,7 +151,7 @@
 
         <!-- Header: prompt only -->
         <header class="w-full px-6 md:px-8 pt-8 text-center">
-            <p data-i18n="prompt" class="max-w-xl mx-auto text-sm md:text-base font-light leading-relaxed opacity-90">
+            <p data-i18n="prompt" class="max-w-xl mx-auto text-sm md:text-base font-light leading-relaxed opacity-50">
                 Choose a quote or write your own, pick a palette inspired by Megève, then press play and watch the words dissolve.
             </p>
         </header>
@@ -498,10 +507,10 @@
         const updateDisplayStyles = () => {
             const progress = state.progress;
 
-            // Size is set only by the slider; it no longer changes during the dissolve
+            // Size is set only by the slider; it does not change during the dissolve
             quoteDisplay.style.fontSize = `${1.5 + (state.textSize / 100) * 3.5}rem`;
 
-            // Dissolve: opacity, blur, distortion and glow only (no scaling or letter-spacing)
+            // Dissolve: opacity, blur, distortion and glow only
             quoteDisplay.style.opacity = Math.max(0, 1 - Math.pow(progress, 2.5));
             quoteDisplay.style.textShadow = `0 0 ${progress * 40}px rgba(255,255,255, ${progress * 0.8})`;
             displacementMap.setAttribute('scale', progress * 120);
